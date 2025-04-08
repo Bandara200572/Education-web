@@ -1,0 +1,1326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EduSphere | Modern Learning Platform</title>
+  
+  <!-- Tailwind CSS via CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  
+  <!-- Three.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  
+  <!-- p5.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.min.js"></script>
+  
+  <!-- GSAP for animations -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.11.4/gsap.min.js"></script>
+  
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
+  
+  <!-- SweetAlert2 -->
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="styles.css">
+
+  
+  
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            primary: {
+              50: '#f0f9ff',
+              100: '#e0f2fe',
+              200: '#bae6fd',
+              300: '#7dd3fc',
+              400: '#38bdf8',
+              500: '#0ea5e9',
+              600: '#0284c7',
+              700: '#0369a1',
+              800: '#075985',
+              900: '#0c4a6e',
+              950: '#082f49',
+            },
+            secondary: {
+              50: '#f5f3ff',
+              100: '#ede9fe',
+              200: '#ddd6fe',
+              300: '#c4b5fd',
+              400: '#a78bfa',
+              500: '#8b5cf6',
+              600: '#7c3aed',
+              700: '#6d28d9',
+              800: '#5b21b6',
+              900: '#4c1d95',
+              950: '#2e1065',
+            },
+            dark: {
+              100: '#1e293b',
+              200: '#0f172a',
+              300: '#020617',
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          },
+        }
+      }
+    }
+  </script>
+</head>
+
+<body class="font-sans antialiased bg-gray-50 text-gray-800 dark:bg-dark-200 dark:text-gray-100 transition-colors duration-300" id="app">
+  <!-- Three.js Canvas -->
+  <canvas id="threeCanvas"></canvas>
+  
+  <!-- p5.js Canvas -->
+  <div id="p5Canvas"></div>
+  
+  <!-- Loading Screen -->
+  <div id="loadingScreen" class="fixed inset-0 flex items-center justify-center bg-white dark:bg-dark-300 z-50 transition-opacity duration-500">
+    <div class="text-center">
+      <div class="loader"></div>
+      <p class="mt-4 text-lg font-medium">Loading immersive experience...</p>
+    </div>
+  </div>
+  
+  <!-- Navigation -->
+  <nav class="fixed top-0 left-0 right-0 z-40 glass backdrop-blur-lg">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-16">
+        <div class="flex items-center">
+          <div class="flex-shrink-0">
+            <span class="text-2xl font-bold gradient-text">EduSphere</span>
+          </div>
+          <div class="hidden md:block">
+            <div class="ml-10 flex items-baseline space-x-4">
+              <a href="#home" class="nav-link px-3 py-2 rounded-md text-sm font-medium hover:bg-primary-500/10 hover:text-primary-600 dark:hover:text-primary-400 transition-colors">Home</a>
+              <a href="#courses" class="nav-link px-3 py-2 rounded-md text-sm font-medium hover:bg-primary-500/10 hover:text-primary-600 dark:hover:text-primary-400 transition-colors">Courses</a>
+              <a href="#features" class="nav-link px-3 py-2 rounded-md text-sm font-medium hover:bg-primary-500/10 hover:text-primary-600 dark:hover:text-primary-400 transition-colors">Features</a>
+              <a href="#about" class="nav-link px-3 py-2 rounded-md text-sm font-medium hover:bg-primary-500/10 hover:text-primary-600 dark:hover:text-primary-400 transition-colors">About</a>
+              <a href="#contact" class="nav-link px-3 py-2 rounded-md text-sm font-medium hover:bg-primary-500/10 hover:text-primary-600 dark:hover:text-primary-400 transition-colors">Contact</a>
+            </div>
+          </div>
+        </div>
+        <div class="flex items-center space-x-4">
+          <!-- Dark Mode Toggle -->
+          <div class="relative inline-block w-10 mr-2 align-middle select-none">
+            <input type="checkbox" id="darkModeToggle" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer"/>
+            <label for="darkModeToggle" class="toggle-label block overflow-hidden h-6 rounded-full bg-gray-300 cursor-pointer"></label>
+          </div>
+          <span class="hidden md:inline-block text-sm">
+            <i id="darkModeIcon" class="fas fa-moon"></i>
+          </span>
+          
+          <!-- Login/Profile Button -->
+          <button id="loginButton" class="flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-secondary-600 hover:bg-secondary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-secondary-500 transition-colors">
+            <i class="fas fa-sign-in-alt mr-2"></i>
+            <span>Login</span>
+          </button>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Mobile menu -->
+    <div id="mobileMenu" class="hidden md:hidden glass backdrop-blur-lg">
+      <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+        <a href="#home" class="nav-link block px-3 py-2 rounded-md text-base font-medium hover:bg-primary-500/10 hover:text-primary-600 dark:hover:text-primary-400 transition-colors">Home</a>
+        <a href="#courses" class="nav-link block px-3 py-2 rounded-md text-base font-medium hover:bg-primary-500/10 hover:text-primary-600 dark:hover:text-primary-400 transition-colors">Courses</a>
+        <a href="#features" class="nav-link block px-3 py-2 rounded-md text-base font-medium hover:bg-primary-500/10 hover:text-primary-600 dark:hover:text-primary-400 transition-colors">Features</a>
+        <a href="#about" class="nav-link block px-3 py-2 rounded-md text-base font-medium hover:bg-primary-500/10 hover:text-primary-600 dark:hover:text-primary-400 transition-colors">About</a>
+        <a href="#contact" class="nav-link block px-3 py-2 rounded-md text-base font-medium hover:bg-primary-500/10 hover:text-primary-600 dark:hover:text-primary-400 transition-colors">Contact</a>
+      </div>
+    </div>
+  </nav>
+  
+  <!-- Mobile menu button -->
+  <button id="mobileMenuButton" class="md:hidden fixed top-4 right-4 z-50 p-2 rounded-md text-gray-400 hover:text-white hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white">
+    <span class="sr-only">Open main menu</span>
+    <i class="fas fa-bars"></i>
+  </button>
+  
+  <!-- Main Content -->
+  <main class="pt-16">
+    <!-- Hero Section -->
+    <section id="home" class="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+      <div class="max-w-7xl mx-auto">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+          <div class="text-center lg:text-left z-10">
+            <h1 class="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight">
+              <span class="block">Transform Your</span>
+              <span class="block gradient-text mt-2">Learning Journey</span>
+            </h1>
+            <p class="mt-6 text-lg md:text-xl max-w-3xl">
+              Experience education reimagined with our interactive, immersive courses designed by industry leaders. Accelerate your career with cutting-edge skills.
+            </p>
+            <div class="mt-10 flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
+              <a href="#courses" class="px-8 py-3 border border-transparent text-base font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors transform hover:scale-105">
+                Explore Courses
+              </a>
+              <a href="#features" class="px-8 py-3 border border-transparent text-base font-medium rounded-md text-gray-700 bg-gray-100 hover:bg-gray-200 dark:text-white dark:bg-dark-100 dark:hover:bg-dark-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors transform hover:scale-105">
+                Discover Features
+              </a>
+            </div>
+          </div>
+          <div class="hidden lg:block relative z-10">
+            <div class="relative">
+              <div class="absolute -top-16 -left-16 w-32 h-32 bg-primary-500/20 rounded-full filter blur-xl"></div>
+              <div class="absolute -bottom-16 -right-16 w-32 h-32 bg-secondary-500/20 rounded-full filter blur-xl"></div>
+              <div class="relative glass rounded-2xl p-8 shadow-xl backdrop-blur-md">
+                <div class="grid grid-cols-2 gap-4">
+                  <div class="float float-delay-1 bg-white dark:bg-dark-100 p-4 rounded-xl shadow-md transform transition-transform hover:scale-105">
+                    <div class="w-12 h-12 rounded-full bg-primary-100 dark:bg-primary-900 flex items-center justify-center mb-4">
+                      <i class="fas fa-microscope text-primary-600 dark:text-primary-400"></i>
+                    </div>
+                    <h3 class="font-semibold">Interactive Labs</h3>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">Hands-on coding environments</p>
+                  </div>
+                  <div class="float float-delay-2 bg-white dark:bg-dark-100 p-4 rounded-xl shadow-md transform transition-transform hover:scale-105">
+                    <div class="w-12 h-12 rounded-full bg-secondary-100 dark:bg-secondary-900 flex items-center justify-center mb-4">
+                      <i class="fas fa-vr-cardboard text-secondary-600 dark:text-secondary-400"></i>
+                    </div>
+                    <h3 class="font-semibold">VR Learning</h3>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">Immersive experiences</p>
+                  </div>
+                  <div class="float bg-white dark:bg-dark-100 p-4 rounded-xl shadow-md transform transition-transform hover:scale-105">
+                    <div class="w-12 h-12 rounded-full bg-green-100 dark:bg-green-900 flex items-center justify-center mb-4">
+                      <i class="fas fa-robot text-green-600 dark:text-green-400"></i>
+                    </div>
+                    <h3 class="font-semibold">AI Tutor</h3>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">24/7 personalized assistance</p>
+                  </div>
+                  <div class="float float-delay-1 bg-white dark:bg-dark-100 p-4 rounded-xl shadow-md transform transition-transform hover:scale-105">
+                    <div class="w-12 h-12 rounded-full bg-yellow-100 dark:bg-yellow-900 flex items-center justify-center mb-4">
+                      <i class="fas fa-network-wired text-yellow-600 dark:text-yellow-400"></i>
+                    </div>
+                    <h3 class="font-semibold">Peer Network</h3>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">Collaborate globally</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Stats Section -->
+        <div class="mt-20 glass rounded-xl p-8 backdrop-blur-md">
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+            <div class="transform transition-transform hover:scale-110">
+              <p class="text-4xl font-bold gradient-text counter" data-target="25000">0</p>
+              <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">Active Learners</p>
+            </div>
+            <div class="transform transition-transform hover:scale-110">
+              <p class="text-4xl font-bold gradient-text counter" data-target="180">0</p>
+              <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">Cutting-edge Courses</p>
+            </div>
+            <div class="transform transition-transform hover:scale-110">
+              <p class="text-4xl font-bold gradient-text counter" data-target="42">0</p>
+              <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">Industry Experts</p>
+            </div>
+            <div class="transform transition-transform hover:scale-110">
+              <p class="text-4xl font-bold gradient-text counter" data-target="99">0</p>
+              <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">Satisfaction Rate</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+    
+    <!-- Courses Section -->
+    <section id="courses" class="py-20 px-4 sm:px-6 lg:px-8 bg-gray-100 dark:bg-dark-100 relative overflow-hidden">
+      <div class="max-w-7xl mx-auto relative z-10">
+        <div class="text-center">
+          <h2 class="text-3xl md:text-4xl font-bold">Future-Ready Courses</h2>
+          <p class="mt-4 text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
+            Master in-demand skills with our immersive learning experiences.
+          </p>
+        </div>
+        
+        <div class="mt-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+          <!-- Course Card 1 -->
+          <div class="course-card bg-white dark:bg-dark-200 rounded-xl shadow-md overflow-hidden transform transition-transform hover:-translate-y-2">
+            <div class="h-48 bg-gradient-to-r from-primary-500 to-secondary-500 flex items-center justify-center relative overflow-hidden">
+              <i class="fas fa-code text-6xl text-white z-10"></i>
+              <div class="absolute inset-0 bg-grid-pattern opacity-10"></div>
+            </div>
+            <div class="p-6">
+              <div class="flex justify-between items-start">
+                <h3 class="text-xl font-semibold">Full-Stack Web Development</h3>
+                <span class="px-2 py-1 bg-primary-100 text-primary-800 dark:bg-primary-900 dark:text-primary-200 text-xs font-medium rounded">Beginner</span>
+              </div>
+              <p class="mt-3 text-gray-600 dark:text-gray-400">Build modern web applications with HTML, CSS, JavaScript, and Node.js.</p>
+              <div class="mt-4 flex items-center text-sm text-gray-500 dark:text-gray-400">
+                <i class="fas fa-clock mr-2"></i>
+                <span>10 weeks</span>
+                <i class="fas fa-book ml-4 mr-2"></i>
+                <span>36 lessons</span>
+              </div>
+              <div class="mt-6 flex items-center justify-between">
+                <div class="flex items-center">
+                  <div class="flex -space-x-2">
+                    <div class="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-xs">MB</div>
+                  </div>
+                  <span class="ml-2 text-sm text-gray-500 dark:text-gray-400">Madushanka Bandara</span>
+                </div>
+                <span class="text-sm font-medium text-primary-600 dark:text-primary-400">$199</span>
+              </div>
+              <button class="mt-6 w-full px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors transform hover:scale-[1.02]">
+                Enroll Now
+              </button>
+            </div>
+          </div>
+          
+          <!-- Course Card 2 -->
+          <div class="course-card bg-white dark:bg-dark-200 rounded-xl shadow-md overflow-hidden transform transition-transform hover:-translate-y-2">
+            <div class="h-48 bg-gradient-to-r from-secondary-500 to-purple-500 flex items-center justify-center relative overflow-hidden">
+              <i class="fab fa-react text-6xl text-white z-10"></i>
+              <div class="absolute inset-0 bg-grid-pattern opacity-10"></div>
+            </div>
+            <div class="p-6">
+              <div class="flex justify-between items-start">
+                <h3 class="text-xl font-semibold">React & Next.js Mastery</h3>
+                <span class="px-2 py-1 bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200 text-xs font-medium rounded">Intermediate</span>
+              </div>
+              <p class="mt-3 text-gray-600 dark:text-gray-400">Build performant, scalable applications with React and Next.js.</p>
+              <div class="mt-4 flex items-center text-sm text-gray-500 dark:text-gray-400">
+                <i class="fas fa-clock mr-2"></i>
+                <span>8 weeks</span>
+                <i class="fas fa-book ml-4 mr-2"></i>
+                <span>32 lessons</span>
+              </div>
+              <div class="mt-6 flex items-center justify-between">
+                <div class="flex items-center">
+                  <div class="flex -space-x-2">
+                    <div class="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-xs">MB</div>
+                  </div>
+                  <span class="ml-2 text-sm text-gray-500 dark:text-gray-400">Madushanka Bandara</span>
+                </div>
+                <span class="text-sm font-medium text-primary-600 dark:text-primary-400">$249</span>
+              </div>
+              <button class="mt-6 w-full px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors transform hover:scale-[1.02]">
+                Enroll Now
+              </button>
+            </div>
+          </div>
+          
+          <!-- Course Card 3 -->
+          <div class="course-card bg-white dark:bg-dark-200 rounded-xl shadow-md overflow-hidden transform transition-transform hover:-translate-y-2">
+            <div class="h-48 bg-gradient-to-r from-green-500 to-teal-500 flex items-center justify-center relative overflow-hidden">
+              <i class="fas fa-server text-6xl text-white z-10"></i>
+              <div class="absolute inset-0 bg-grid-pattern opacity-10"></div>
+            </div>
+            <div class="p-6">
+              <div class="flex justify-between items-start">
+                <h3 class="text-xl font-semibold">Cloud Architecture</h3>
+                <span class="px-2 py-1 bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200 text-xs font-medium rounded">Intermediate</span>
+              </div>
+              <p class="mt-3 text-gray-600 dark:text-gray-400">Master AWS, Azure, and GCP for scalable solutions.</p>
+              <div class="mt-4 flex items-center text-sm text-gray-500 dark:text-gray-400">
+                <i class="fas fa-clock mr-2"></i>
+                <span>12 weeks</span>
+                <i class="fas fa-book ml-4 mr-2"></i>
+                <span>40 lessons</span>
+              </div>
+              <div class="mt-6 flex items-center justify-between">
+                <div class="flex items-center">
+                  <div class="flex -space-x-2">
+                    <div class="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-xs">MB</div>
+                  </div>
+                  <span class="ml-2 text-sm text-gray-500 dark:text-gray-400">Madushanka Bandara</span>
+                </div>
+                <span class="text-sm font-medium text-primary-600 dark:text-primary-400">$299</span>
+              </div>
+              <button class="mt-6 w-full px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors transform hover:scale-[1.02]">
+                Enroll Now
+              </button>
+            </div>
+          </div>
+          
+          <!-- Course Card 4 -->
+          <div class="course-card bg-white dark:bg-dark-200 rounded-xl shadow-md overflow-hidden transform transition-transform hover:-translate-y-2">
+            <div class="h-48 bg-gradient-to-r from-red-500 to-orange-500 flex items-center justify-center relative overflow-hidden">
+              <i class="fas fa-brain text-6xl text-white z-10"></i>
+              <div class="absolute inset-0 bg-grid-pattern opacity-10"></div>
+            </div>
+            <div class="p-6">
+              <div class="flex justify-between items-start">
+                <h3 class="text-xl font-semibold">Machine Learning</h3>
+                <span class="px-2 py-1 bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200 text-xs font-medium rounded">Advanced</span>
+              </div>
+              <p class="mt-3 text-gray-600 dark:text-gray-400">Implement ML algorithms with Python and TensorFlow.</p>
+              <div class="mt-4 flex items-center text-sm text-gray-500 dark:text-gray-400">
+                <i class="fas fa-clock mr-2"></i>
+                <span>14 weeks</span>
+                <i class="fas fa-book ml-4 mr-2"></i>
+                <span>48 lessons</span>
+              </div>
+              <div class="mt-6 flex items-center justify-between">
+                <div class="flex items-center">
+                  <div class="flex -space-x-2">
+                    <div class="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-xs">MB</div>
+                  </div>
+                  <span class="ml-2 text-sm text-gray-500 dark:text-gray-400">Madushanka Bandara</span>
+                </div>
+                <span class="text-sm font-medium text-primary-600 dark:text-primary-400">$349</span>
+              </div>
+              <button class="mt-6 w-full px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors transform hover:scale-[1.02]">
+                Enroll Now
+              </button>
+            </div>
+          </div>
+          
+          <!-- Course Card 5 -->
+          <div class="course-card bg-white dark:bg-dark-200 rounded-xl shadow-md overflow-hidden transform transition-transform hover:-translate-y-2">
+            <div class="h-48 bg-gradient-to-r from-blue-500 to-cyan-500 flex items-center justify-center relative overflow-hidden">
+              <i class="fas fa-mobile-alt text-6xl text-white z-10"></i>
+              <div class="absolute inset-0 bg-grid-pattern opacity-10"></div>
+            </div>
+            <div class="p-6">
+              <div class="flex justify-between items-start">
+                <h3 class="text-xl font-semibold">Flutter Development</h3>
+                <span class="px-2 py-1 bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200 text-xs font-medium rounded">Intermediate</span>
+              </div>
+              <p class="mt-3 text-gray-600 dark:text-gray-400">Build cross-platform apps with Flutter and Dart.</p>
+              <div class="mt-4 flex items-center text-sm text-gray-500 dark:text-gray-400">
+                <i class="fas fa-clock mr-2"></i>
+                <span>10 weeks</span>
+                <i class="fas fa-book ml-4 mr-2"></i>
+                <span>36 lessons</span>
+              </div>
+              <div class="mt-6 flex items-center justify-between">
+                <div class="flex items-center">
+                  <div class="flex -space-x-2">
+                    <div class="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-xs">MB</div>
+                  </div>
+                  <span class="ml-2 text-sm text-gray-500 dark:text-gray-400">Madushanka Bandara</span>
+                </div>
+                <span class="text-sm font-medium text-primary-600 dark:text-primary-400">$279</span>
+              </div>
+              <button class="mt-6 w-full px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors transform hover:scale-[1.02]">
+                Enroll Now
+              </button>
+            </div>
+          </div>
+          
+          <!-- Course Card 6 -->
+          <div class="course-card bg-white dark:bg-dark-200 rounded-xl shadow-md overflow-hidden transform transition-transform hover:-translate-y-2">
+            <div class="h-48 bg-gradient-to-r from-purple-500 to-pink-500 flex items-center justify-center relative overflow-hidden">
+              <i class="fas fa-shield-alt text-6xl text-white z-10"></i>
+              <div class="absolute inset-0 bg-grid-pattern opacity-10"></div>
+            </div>
+            <div class="p-6">
+              <div class="flex justify-between items-start">
+                <h3 class="text-xl font-semibold">Cybersecurity</h3>
+                <span class="px-2 py-1 bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200 text-xs font-medium rounded">Advanced</span>
+              </div>
+              <p class="mt-3 text-gray-600 dark:text-gray-400">Learn ethical hacking and system defense techniques.</p>
+              <div class="mt-4 flex items-center text-sm text-gray-500 dark:text-gray-400">
+                <i class="fas fa-clock mr-2"></i>
+                <span>12 weeks</span>
+                <i class="fas fa-book ml-4 mr-2"></i>
+                <span>42 lessons</span>
+              </div>
+              <div class="mt-6 flex items-center justify-between">
+                <div class="flex items-center">
+                  <div class="flex -space-x-2">
+                    <div class="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-xs">MB</div>
+                  </div>
+                  <span class="ml-2 text-sm text-gray-500 dark:text-gray-400">Madushanka Bandara</span>
+                </div>
+                <span class="text-sm font-medium text-primary-600 dark:text-primary-400">$329</span>
+              </div>
+              <button class="mt-6 w-full px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors transform hover:scale-[1.02]">
+                Enroll Now
+              </button>
+            </div>
+          </div>
+        </div>
+        
+        <div class="mt-12 text-center">
+          <a href="#" class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-primary-700 bg-primary-100 hover:bg-primary-200 dark:text-primary-300 dark:bg-primary-900/30 dark:hover:bg-primary-900/50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors transform hover:scale-105">
+            Browse All Courses
+            <i class="fas fa-arrow-right ml-2"></i>
+          </a>
+        </div>
+      </div>
+    </section>
+    
+    <!-- Features Section -->
+    <section id="features" class="py-20 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+      <div class="max-w-7xl mx-auto relative z-10">
+        <div class="text-center">
+          <h2 class="text-3xl md:text-4xl font-bold">Why Choose EduSphere?</h2>
+          <p class="mt-4 text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
+            Our platform is designed to deliver the most effective learning experience.
+          </p>
+        </div>
+        
+        <div class="mt-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <!-- Feature 1 -->
+          <div class="glass rounded-2xl p-8 shadow-xl backdrop-blur-md transform transition-transform hover:-translate-y-2">
+            <div class="w-16 h-16 rounded-full bg-primary-100 dark:bg-primary-900 flex items-center justify-center mb-6">
+              <i class="fas fa-vr-cardboard text-primary-600 dark:text-primary-400 text-2xl"></i>
+            </div>
+            <h3 class="text-xl font-semibold">Immersive Learning</h3>
+            <p class="mt-3 text-gray-600 dark:text-gray-400">
+              Experience VR-powered learning environments that make complex concepts tangible and memorable.
+            </p>
+          </div>
+          
+          <!-- Feature 2 -->
+          <div class="glass rounded-2xl p-8 shadow-xl backdrop-blur-md transform transition-transform hover:-translate-y-2">
+            <div class="w-16 h-16 rounded-full bg-secondary-100 dark:bg-secondary-900 flex items-center justify-center mb-6">
+              <i class="fas fa-robot text-secondary-600 dark:text-secondary-400 text-2xl"></i>
+            </div>
+            <h3 class="text-xl font-semibold">AI-Powered Tutor</h3>
+            <p class="mt-3 text-gray-600 dark:text-gray-400">
+              Get 24/7 personalized assistance from our AI tutor that adapts to your learning style.
+            </p>
+          </div>
+          
+          <!-- Feature 3 -->
+          <div class="glass rounded-2xl p-8 shadow-xl backdrop-blur-md transform transition-transform hover:-translate-y-2">
+            <div class="w-16 h-16 rounded-full bg-green-100 dark:bg-green-900 flex items-center justify-center mb-6">
+              <i class="fas fa-laptop-code text-green-600 dark:text-green-400 text-2xl"></i>
+            </div>
+            <h3 class="text-xl font-semibold">Interactive Labs</h3>
+            <p class="mt-3 text-gray-600 dark:text-gray-400">
+              Practice coding directly in browser-based labs with real-time feedback and debugging.
+            </p>
+          </div>
+          
+          <!-- Feature 4 -->
+          <div class="glass rounded-2xl p-8 shadow-xl backdrop-blur-md transform transition-transform hover:-translate-y-2">
+            <div class="w-16 h-16 rounded-full bg-yellow-100 dark:bg-yellow-900 flex items-center justify-center mb-6">
+              <i class="fas fa-project-diagram text-yellow-600 dark:text-yellow-400 text-2xl"></i>
+            </div>
+            <h3 class="text-xl font-semibold">Project-Based</h3>
+            <p class="mt-3 text-gray-600 dark:text-gray-400">
+              Build portfolio-worthy projects that demonstrate your skills to potential employers.
+            </p>
+          </div>
+          
+          <!-- Feature 5 -->
+          <div class="glass rounded-2xl p-8 shadow-xl backdrop-blur-md transform transition-transform hover:-translate-y-2">
+            <div class="w-16 h-16 rounded-full bg-red-100 dark:bg-red-900 flex items-center justify-center mb-6">
+              <i class="fas fa-certificate text-red-600 dark:text-red-400 text-2xl"></i>
+            </div>
+            <h3 class="text-xl font-semibold">Industry Certifications</h3>
+            <p class="mt-3 text-gray-600 dark:text-gray-400">
+              Earn recognized certifications that validate your expertise to employers.
+            </p>
+          </div>
+          
+          <!-- Feature 6 -->
+          <div class="glass rounded-2xl p-8 shadow-xl backdrop-blur-md transform transition-transform hover:-translate-y-2">
+            <div class="w-16 h-16 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center mb-6">
+              <i class="fas fa-users text-blue-600 dark:text-blue-400 text-2xl"></i>
+            </div>
+            <h3 class="text-xl font-semibold">Mentor Network</h3>
+            <p class="mt-3 text-gray-600 dark:text-gray-400">
+              Connect with industry professionals for guidance and career advice.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+    
+    <!-- Testimonials Section -->
+    <section class="py-20 px-4 sm:px-6 lg:px-8 bg-gray-100 dark:bg-dark-100 relative overflow-hidden">
+      <div class="max-w-7xl mx-auto relative z-10">
+        <div class="text-center">
+          <h2 class="text-3xl md:text-4xl font-bold">Success Stories</h2>
+          <p class="mt-4 text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
+            Hear from our students who transformed their careers.
+          </p>
+        </div>
+        
+        <div class="mt-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <!-- Testimonial 1 -->
+          <div class="glass rounded-2xl p-8 shadow-xl backdrop-blur-md transform transition-transform hover:-translate-y-2">
+            <div class="flex items-center">
+              <div class="w-12 h-12 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-lg font-medium">MB</div>
+              <div class="ml-4">
+                <h3 class="font-semibold">Madushanka Bandara</h3>
+                <p class="text-sm text-gray-500 dark:text-gray-400">Senior Developer</p>
+              </div>
+            </div>
+            <p class="mt-4 text-gray-600 dark:text-gray-400 italic">
+              "EduSphere's Full-Stack course gave me the skills to transition from a junior to senior developer in just 6 months. The hands-on projects were exactly what employers were looking for."
+            </p>
+            <div class="mt-4 flex">
+              <i class="fas fa-star text-yellow-400"></i>
+              <i class="fas fa-star text-yellow-400"></i>
+              <i class="fas fa-star text-yellow-400"></i>
+              <i class="fas fa-star text-yellow-400"></i>
+              <i class="fas fa-star text-yellow-400"></i>
+            </div>
+          </div>
+          
+          <!-- Testimonial 2 -->
+          <div class="glass rounded-2xl p-8 shadow-xl backdrop-blur-md transform transition-transform hover:-translate-y-2">
+            <div class="flex items-center">
+              <div class="w-12 h-12 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-lg font-medium">AS</div>
+              <div class="ml-4">
+                <h3 class="font-semibold">Alex Smith</h3>
+                <p class="text-sm text-gray-500 dark:text-gray-400">Data Scientist</p>
+              </div>
+            </div>
+            <p class="mt-4 text-gray-600 dark:text-gray-400 italic">
+              "The Machine Learning course's VR simulations helped me grasp complex algorithms in ways traditional courses never could. I landed my dream job at a tech startup!"
+            </p>
+            <div class="mt-4 flex">
+              <i class="fas fa-star text-yellow-400"></i>
+              <i class="fas fa-star text-yellow-400"></i>
+              <i class="fas fa-star text-yellow-400"></i>
+              <i class="fas fa-star text-yellow-400"></i>
+              <i class="fas fa-star text-yellow-400"></i>
+            </div>
+          </div>
+          
+          <!-- Testimonial 3 -->
+          <div class="glass rounded-2xl p-8 shadow-xl backdrop-blur-md transform transition-transform hover:-translate-y-2">
+            <div class="flex items-center">
+              <div class="w-12 h-12 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-lg font-medium">TJ</div>
+              <div class="ml-4">
+                <h3 class="font-semibold">Taylor Johnson</h3>
+                <p class="text-sm text-gray-500 dark:text-gray-400">DevOps Engineer</p>
+              </div>
+            </div>
+            <p class="mt-4 text-gray-600 dark:text-gray-400 italic">
+              "The Cloud Architecture course's interactive labs mirrored real-world scenarios perfectly. I went from zero cloud knowledge to AWS-certified in 3 months."
+            </p>
+            <div class="mt-4 flex">
+              <i class="fas fa-star text-yellow-400"></i>
+              <i class="fas fa-star text-yellow-400"></i>
+              <i class="fas fa-star text-yellow-400"></i>
+              <i class="fas fa-star text-yellow-400"></i>
+              <i class="fas fa-star-half-alt text-yellow-400"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+    
+    <!-- About Section -->
+    <section id="about" class="py-20 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+      <div class="max-w-7xl mx-auto relative z-10">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+          <div>
+            <div class="relative">
+              <div class="absolute -top-6 -left-6 w-24 h-24 bg-primary-500/20 rounded-full filter blur-xl"></div>
+              <div class="absolute -bottom-6 -right-6 w-24 h-24 bg-secondary-500/20 rounded-full filter blur-xl"></div>
+              <div class="relative z-10 glass rounded-2xl p-8 shadow-xl backdrop-blur-md">
+                <div class="flex flex-col items-center">
+                    <img src="profile-pic.png" class="profile-img">
+                  <div class="text-center">
+                    <h3 class="text-2xl font-bold gradient-text">Madushanka Bandara</h3>
+                    <p class="text-lg text-gray-600 dark:text-gray-400">Founder & Lead Instructor</p>
+                  </div>
+                  <div class="mt-6 flex space-x-4">
+                    <a href="https://www.youtube.com/@djtharusha7539" target="_blank" class="w-10 h-10 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center text-red-600 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors transform hover:scale-110">
+                      <i class="fab fa-youtube"></i>
+                    </a>
+                    <a href="https://www.tiktok.com/@slmusic1257" target="_blank" class="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-900/30 flex items-center justify-center text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-900/50 transition-colors transform hover:scale-110">
+                      <i class="fab fa-tiktok"></i>
+                    </a>
+                    <a href="https://web.facebook.com/profile.php?id=100053959956727" target="_blank" class="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400 hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors transform hover:scale-110">
+                      <i class="fab fa-facebook-f"></i>
+                    </a>
+                    <a href="https://wa.me/+94713780613" target="_blank" class="w-10 h-10 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center text-green-600 dark:text-green-400 hover:bg-green-200 dark:hover:bg-green-900/50 transition-colors transform hover:scale-110">
+                      <i class="fab fa-whatsapp"></i>
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div>
+            <h2 class="text-3xl md:text-4xl font-bold">Our Vision</h2>
+            <p class="mt-6 text-lg text-gray-600 dark:text-gray-400">
+              With over 5 years of experience in web development and education, I created EduSphere to revolutionize how people learn technology skills. Traditional education moves too slowly for the pace of technological change.
+            </p>
+            <p class="mt-4 text-lg text-gray-600 dark:text-gray-400">
+              Our mission is to provide immersive, interactive education that prepares learners for the jobs of tomorrow, not yesterday. We combine cutting-edge technology with proven pedagogical approaches to create the most effective learning experience possible.
+            </p>
+            <div class="mt-8 space-y-4">
+              <div class="flex items-start">
+                <div class="flex-shrink-0 mt-1">
+                  <i class="fas fa-check-circle text-primary-600 dark:text-primary-400"></i>
+                </div>
+                <div class="ml-3">
+                  <h3 class="text-lg font-medium">Industry-Aligned Curriculum</h3>
+                  <p class="text-gray-600 dark:text-gray-400">Courses updated quarterly to reflect current best practices.</p>
+                </div>
+              </div>
+              <div class="flex items-start">
+                <div class="flex-shrink-0 mt-1">
+                  <i class="fas fa-check-circle text-primary-600 dark:text-primary-400"></i>
+                </div>
+                <div class="ml-3">
+                  <h3 class="text-lg font-medium">Learning Science</h3>
+                  <p class="text-gray-600 dark:text-gray-400">Methods grounded in cognitive science for optimal retention.</p>
+                </div>
+              </div>
+              <div class="flex items-start">
+                <div class="flex-shrink-0 mt-1">
+                  <i class="fas fa-check-circle text-primary-600 dark:text-primary-400"></i>
+                </div>
+                <div class="ml-3">
+                  <h3 class="text-lg font-medium">Career Support</h3>
+                  <p class="text-gray-600 dark:text-gray-400">Resume reviews, mock interviews, and job placement assistance.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+    
+    <!-- Contact Section -->
+    <section id="contact" class="py-20 px-4 sm:px-6 lg:px-8 bg-gray-100 dark:bg-dark-100 relative overflow-hidden">
+      <div class="max-w-7xl mx-auto relative z-10">
+        <div class="text-center">
+          <h2 class="text-3xl md:text-4xl font-bold">Get In Touch</h2>
+          <p class="mt-4 text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
+            Have questions or feedback? We'd love to hear from you.
+          </p>
+        </div>
+        
+        <div class="mt-12 grid grid-cols-1 lg:grid-cols-2 gap-12">
+          <div class="glass rounded-2xl p-8 shadow-xl backdrop-blur-md">
+            <h3 class="text-2xl font-bold">Contact Information</h3>
+            <div class="mt-6 space-y-4">
+              <div class="flex items-start">
+                <div class="flex-shrink-0 mt-1">
+                  <i class="fas fa-user text-primary-600 dark:text-primary-400"></i>
+                </div>
+                <div class="ml-3">
+                  <p class="text-gray-600 dark:text-gray-400">Madushanka Bandara</p>
+                </div>
+              </div>
+              <div class="flex items-start">
+                <div class="flex-shrink-0 mt-1">
+                  <i class="fas fa-envelope text-primary-600 dark:text-primary-400"></i>
+                </div>
+                <div class="ml-3">
+                  <p class="text-gray-600 dark:text-gray-400">madushankab27@gmail.com</p>
+                </div>
+              </div>
+              <div class="flex items-start">
+                <div class="flex-shrink-0 mt-1">
+                  <i class="fas fa-phone text-primary-600 dark:text-primary-400"></i>
+                </div>
+                <div class="ml-3">
+                  <p class="text-gray-600 dark:text-gray-400">0713780613</p>
+                </div>
+              </div>
+            </div>
+            
+            <h3 class="text-xl font-bold mt-8">Connect With Us</h3>
+            <div class="mt-4 flex space-x-4">
+              <a href="https://www.youtube.com/@djtharusha7539" target="_blank" class="w-10 h-10 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center text-red-600 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors transform hover:scale-110">
+                <i class="fab fa-youtube"></i>
+              </a>
+              <a href="https://www.tiktok.com/@slmusic1257" target="_blank" class="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-900/30 flex items-center justify-center text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-900/50 transition-colors transform hover:scale-110">
+                <i class="fab fa-tiktok"></i>
+              </a>
+              <a href="https://web.facebook.com/profile.php?id=100053959956727" target="_blank" class="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400 hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors transform hover:scale-110">
+                <i class="fab fa-facebook-f"></i>
+              </a>
+              <a href="https://wa.me/+94713780613" target="_blank" class="w-10 h-10 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center text-green-600 dark:text-green-400 hover:bg-green-200 dark:hover:bg-green-900/50 transition-colors transform hover:scale-110">
+                <i class="fab fa-whatsapp"></i>
+              </a>
+            </div>
+          </div>
+          
+          <div class="glass rounded-2xl p-8 shadow-xl backdrop-blur-md">
+            <form id="contactForm">
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <div>
+                  <label for="name" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Name</label>
+                  <input type="text" id="name" name="name" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:bg-dark-300 dark:border-dark-100 dark:text-white" required>
+                </div>
+                <div>
+                  <label for="email" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Email</label>
+                  <input type="email" id="email" name="email" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:bg-dark-300 dark:border-dark-100 dark:text-white" required>
+                </div>
+              </div>
+              <div class="mt-6">
+                <label for="subject" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Subject</label>
+                <input type="text" id="subject" name="subject" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:bg-dark-300 dark:border-dark-100 dark:text-white" required>
+              </div>
+              <div class="mt-6">
+                <label for="message" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Message</label>
+                <textarea id="message" name="message" rows="4" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:bg-dark-300 dark:border-dark-100 dark:text-white" required></textarea>
+              </div>
+              <div class="mt-6">
+                <button type="submit" class="w-full px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors transform hover:scale-[1.02]">
+                  Send Message
+                </button>
+              </div>
+            </form>
+            <div id="formSuccess" class="hidden mt-6 text-center text-green-600 dark:text-green-400 font-medium">
+              <i class="fas fa-check-circle mr-2"></i> Thank you! Your message has been sent.
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+  
+  <!-- Footer -->
+  <footer class="bg-gray-800 dark:bg-dark-300 text-white py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-7xl mx-auto">
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+        <div>
+          <h3 class="text-xl font-bold gradient-text">EduSphere</h3>
+          <p class="mt-4 text-gray-400">
+            The future of education is here. Learn, build, and grow with cutting-edge technology.
+          </p>
+          <div class="mt-4 flex space-x-4">
+            <a href="#" class="text-gray-400 hover:text-white transition-colors">
+              <i class="fab fa-twitter"></i>
+            </a>
+            <a href="#" class="text-gray-400 hover:text-white transition-colors">
+              <i class="fab fa-linkedin"></i>
+            </a>
+            <a href="#" class="text-gray-400 hover:text-white transition-colors">
+              <i class="fab fa-github"></i>
+            </a>
+            <a href="#" class="text-gray-400 hover:text-white transition-colors">
+              <i class="fab fa-instagram"></i>
+            </a>
+          </div>
+        </div>
+        <div>
+          <h3 class="text-lg font-semibold">Quick Links</h3>
+          <ul class="mt-4 space-y-2">
+            <li><a href="#home" class="text-gray-400 hover:text-white transition-colors">Home</a></li>
+            <li><a href="#courses" class="text-gray-400 hover:text-white transition-colors">Courses</a></li>
+            <li><a href="#features" class="text-gray-400 hover:text-white transition-colors">Features</a></li>
+            <li><a href="#about" class="text-gray-400 hover:text-white transition-colors">About</a></li>
+            <li><a href="#contact" class="text-gray-400 hover:text-white transition-colors">Contact</a></li>
+          </ul>
+        </div>
+        <div>
+          <h3 class="text-lg font-semibold">Resources</h3>
+          <ul class="mt-4 space-y-2">
+            <li><a href="#" class="text-gray-400 hover:text-white transition-colors">Blog</a></li>
+            <li><a href="#" class="text-gray-400 hover:text-white transition-colors">Documentation</a></li>
+            <li><a href="#" class="text-gray-400 hover:text-white transition-colors">Community</a></li>
+            <li><a href="#" class="text-gray-400 hover:text-white transition-colors">Webinars</a></li>
+            <li><a href="#" class="text-gray-400 hover:text-white transition-colors">Career Services</a></li>
+          </ul>
+        </div>
+        <div>
+          <h3 class="text-lg font-semibold">Legal</h3>
+          <ul class="mt-4 space-y-2">
+            <li><a href="#" class="text-gray-400 hover:text-white transition-colors">Privacy Policy</a></li>
+            <li><a href="#" class="text-gray-400 hover:text-white transition-colors">Terms of Service</a></li>
+            <li><a href="#" class="text-gray-400 hover:text-white transition-colors">Cookie Policy</a></li>
+            <li><a href="#" class="text-gray-400 hover:text-white transition-colors">Refund Policy</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="mt-12 pt-8 border-t border-gray-700">
+        <div class="flex flex-col md:flex-row justify-between items-center">
+          <p class="text-center md:text-left text-gray-400">&copy; 2023 EduSphere. All rights reserved.</p>
+          <div class="mt-4 md:mt-0 flex space-x-6">
+            <a href="#" class="text-gray-400 hover:text-white transition-colors">Accessibility</a>
+            <a href="#" class="text-gray-400 hover:text-white transition-colors">Sitemap</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </footer>
+  
+  <!-- Login Modal -->
+  <div id="loginModal" class="fixed inset-0 z-50 hidden">
+    <div class="absolute inset-0 bg-black bg-opacity-50 backdrop-blur-sm"></div>
+    <div class="absolute inset-0 flex items-center justify-center p-4">
+      <div class="bg-white dark:bg-dark-200 rounded-2xl shadow-2xl w-full max-w-md overflow-hidden transform transition-all duration-300 scale-95 opacity-0" id="modalContent">
+        <div class="relative">
+          <!-- Close Button -->
+          <button id="closeLoginModal" class="absolute top-4 right-4 text-gray-400 hover:text-gray-500 dark:text-gray-500 dark:hover:text-gray-400 transition-colors">
+            <i class="fas fa-times text-xl"></i>
+          </button>
+          
+          <!-- Login/Signup Tabs -->
+          <div class="flex">
+            <button id="loginTab" class="w-[45%] py-4 text-center font-medium text-primary-600 dark:text-primary-400 border-b-2 border-primary-600 dark:border-primary-400">Sign In</button>
+            <button id="signupTab" class="w-[45%] py-4 text-center font-medium text-gray-600 dark:text-gray-400 border-b-2 border-transparent">Sign Up</button>
+          </div>
+          
+          <!-- Login Form -->
+          <div id="loginForm" class="p-6">
+            <h2 class="text-2xl font-bold text-center">Welcome Back</h2>
+            <p class="mt-2 text-center text-gray-600 dark:text-gray-400">Sign in to your account</p>
+            
+            <div class="mt-6 flex justify-center space-x-4">
+              <a href="#" class="w-10 h-10 rounded-full bg-gray-100 dark:bg-dark-100 flex items-center justify-center text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-dark-300 transition-colors transform hover:scale-110">
+                <i class="fab fa-google"></i>
+              </a>
+              <a href="#" class="w-10 h-10 rounded-full bg-gray-100 dark:bg-dark-100 flex items-center justify-center text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-dark-300 transition-colors transform hover:scale-110">
+                <i class="fab fa-facebook-f"></i>
+              </a>
+              <a href="#" class="w-10 h-10 rounded-full bg-gray-100 dark:bg-dark-100 flex items-center justify-center text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-dark-300 transition-colors transform hover:scale-110">
+                <i class="fab fa-github"></i>
+              </a>
+              <a href="#" class="w-10 h-10 rounded-full bg-gray-100 dark:bg-dark-100 flex items-center justify-center text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-dark-300 transition-colors transform hover:scale-110">
+                <i class="fab fa-linkedin-in"></i>
+              </a>
+            </div>
+            
+            <div class="mt-6 relative">
+              <div class="absolute inset-0 flex items-center">
+                <div class="w-full border-t border-gray-300 dark:border-gray-700"></div>
+              </div>
+              <div class="relative flex justify-center text-sm">
+                <span class="px-2 bg-white dark:bg-dark-200 text-gray-500 dark:text-gray-400">Or continue with</span>
+              </div>
+            </div>
+            
+            <form class="mt-6 space-y-6">
+              <div>
+                <label for="login-email" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Email</label>
+                <input type="email" id="login-email" name="email" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:bg-dark-300 dark:border-dark-100 dark:text-white" required>
+              </div>
+              <div>
+                <label for="login-password" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Password</label>
+                <div class="relative">
+                  <input type="password" id="login-password" name="password" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:bg-dark-300 dark:border-dark-100 dark:text-white" required>
+                  <button type="button" class="toggle-password absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-500 dark:text-gray-500 dark:hover:text-gray-400" data-target="login-password">
+                    <i class="fas fa-eye-slash"></i>
+                  </button>
+                </div>
+              </div>
+              <div class="flex items-center justify-between">
+                <div class="flex items-center">
+                  <input type="checkbox" id="remember-me" class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded dark:bg-dark-300 dark:border-dark-100">
+                  <label for="remember-me" class="ml-2 block text-sm text-gray-700 dark:text-gray-300">Remember me</label>
+                </div>
+                <div class="text-sm">
+                  <a href="#" class="font-medium text-primary-600 hover:text-primary-500 dark:text-primary-400 dark:hover:text-primary-300">Forgot password?</a>
+                </div>
+              </div>
+              <div>
+                <button type="submit" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors transform hover:scale-[1.02]">
+                  Sign In
+                </button>
+              </div>
+            </form>
+          </div>
+          
+          <!-- Signup Form -->
+          <div id="signupForm" class="p-6 hidden">
+            <h2 class="text-2xl font-bold text-center">Create Account</h2>
+            <p class="mt-2 text-center text-gray-600 dark:text-gray-400">Sign up for a new account</p>
+            
+            <div class="mt-6 flex justify-center space-x-4">
+              <a href="#" class="w-10 h-10 rounded-full bg-gray-100 dark:bg-dark-100 flex items-center justify-center text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-dark-300 transition-colors transform hover:scale-110">
+                <i class="fab fa-google"></i>
+              </a>
+              <a href="#" class="w-10 h-10 rounded-full bg-gray-100 dark:bg-dark-100 flex items-center justify-center text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-dark-300 transition-colors transform hover:scale-110">
+                <i class="fab fa-facebook-f"></i>
+              </a>
+              <a href="#" class="w-10 h-10 rounded-full bg-gray-100 dark:bg-dark-100 flex items-center justify-center text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-dark-300 transition-colors transform hover:scale-110">
+                <i class="fab fa-github"></i>
+              </a>
+              <a href="#" class="w-10 h-10 rounded-full bg-gray-100 dark:bg-dark-100 flex items-center justify-center text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-dark-300 transition-colors transform hover:scale-110">
+                <i class="fab fa-linkedin-in"></i>
+              </a>
+            </div>
+            
+            <div class="mt-6 relative">
+              <div class="absolute inset-0 flex items-center">
+                <div class="w-full border-t border-gray-300 dark:border-gray-700"></div>
+              </div>
+              <div class="relative flex justify-center text-sm">
+                <span class="px-2 bg-white dark:bg-dark-200 text-gray-500 dark:text-gray-400">Or continue with</span>
+              </div>
+            </div>
+            
+            <form class="mt-6 space-y-6">
+              <div>
+                <label for="signup-name" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Name</label>
+                <input type="text" id="signup-name" name="name" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:bg-dark-300 dark:border-dark-100 dark:text-white" required>
+              </div>
+              <div>
+                <label for="signup-email" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Email</label>
+                <input type="email" id="signup-email" name="email" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:bg-dark-300 dark:border-dark-100 dark:text-white" required>
+              </div>
+              <div>
+                <label for="signup-password" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Password</label>
+                <div class="relative">
+                  <input type="password" id="signup-password" name="password" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:bg-dark-300 dark:border-dark-100 dark:text-white" required>
+                  <button type="button" class="toggle-password absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-500 dark:text-gray-500 dark:hover:text-gray-400" data-target="signup-password">
+                    <i class="fas fa-eye-slash"></i>
+                  </button>
+                </div>
+              </div>
+              <div>
+                <button type="submit" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors transform hover:scale-[1.02]">
+                  Sign Up
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Back to Top Button -->
+  <button id="backToTop" class="fixed bottom-8 right-8 w-12 h-12 rounded-full bg-primary-600 text-white shadow-lg hover:bg-primary-700 transition-colors transform scale-0 opacity-0">
+    <i class="fas fa-arrow-up"></i>
+  </button>
+
+  <!-- Dashboard Modal -->
+<div id="dashboardModal" class="fixed inset-0 z-50 hidden overflow-y-auto">
+    <div class="absolute inset-0 bg-black bg-opacity-50 backdrop-blur-sm"></div>
+    <div class="relative min-h-screen flex items-center justify-center p-4">
+      <div class="bg-white dark:bg-dark-200 rounded-2xl shadow-2xl w-full max-w-6xl overflow-hidden transform transition-all duration-300 scale-95 opacity-0" id="dashboardContent">
+        <!-- Dashboard Header -->
+        <div class="flex items-center justify-between p-6 border-b border-gray-200 dark:border-dark-100">
+          <h2 class="text-2xl font-bold gradient-text">Learning Dashboard</h2>
+          <button id="closeDashboard" class="text-gray-400 hover:text-gray-500 dark:text-gray-500 dark:hover:text-gray-400 transition-colors">
+            <i class="fas fa-times text-xl"></i>
+          </button>
+        </div>
+        
+        <!-- Dashboard Content -->
+        <div class="p-6">
+          <!-- Welcome Section -->
+          <div class="glass rounded-xl p-6 mb-8 backdrop-blur-md">
+            <div class="flex flex-col md:flex-row items-center justify-between">
+              <div>
+                <h3 class="text-xl font-semibold">Welcome back, <span id="userName">Learner</span>!</h3>
+                <p class="text-gray-600 dark:text-gray-400 mt-2">Continue your learning journey today</p>
+              </div>
+              <div class="mt-4 md:mt-0 flex items-center">
+                <div class="w-12 h-12 rounded-full bg-primary-100 dark:bg-primary-900 flex items-center justify-center text-primary-600 dark:text-primary-400">
+                  <i class="fas fa-user-graduate text-xl"></i>
+                </div>
+                <div class="ml-4">
+                  <p class="text-sm text-gray-500 dark:text-gray-400">Current Level</p>
+                  <p class="font-semibold">Intermediate</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Stats Overview -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div class="glass rounded-xl p-6 backdrop-blur-md">
+              <div class="flex items-center">
+                <div class="w-12 h-12 rounded-full bg-green-100 dark:bg-green-900 flex items-center justify-center text-green-600 dark:text-green-400">
+                  <i class="fas fa-book-open"></i>
+                </div>
+                <div class="ml-4">
+                  <p class="text-sm text-gray-500 dark:text-gray-400">Active Courses</p>
+                  <p class="text-2xl font-bold">3</p>
+                </div>
+              </div>
+            </div>
+            <div class="glass rounded-xl p-6 backdrop-blur-md">
+              <div class="flex items-center">
+                <div class="w-12 h-12 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center text-blue-600 dark:text-blue-400">
+                  <i class="fas fa-check-circle"></i>
+                </div>
+                <div class="ml-4">
+                  <p class="text-sm text-gray-500 dark:text-gray-400">Completed</p>
+                  <p class="text-2xl font-bold">2</p>
+                </div>
+              </div>
+            </div>
+            <div class="glass rounded-xl p-6 backdrop-blur-md">
+              <div class="flex items-center">
+                <div class="w-12 h-12 rounded-full bg-yellow-100 dark:bg-yellow-900 flex items-center justify-center text-yellow-600 dark:text-yellow-400">
+                  <i class="fas fa-clock"></i>
+                </div>
+                <div class="ml-4">
+                  <p class="text-sm text-gray-500 dark:text-gray-400">Learning Streak</p>
+                  <p class="text-2xl font-bold">5 days</p>
+                </div>
+              </div>
+            </div>
+            <div class="glass rounded-xl p-6 backdrop-blur-md">
+              <div class="flex items-center">
+                <div class="w-12 h-12 rounded-full bg-purple-100 dark:bg-purple-900 flex items-center justify-center text-purple-600 dark:text-purple-400">
+                  <i class="fas fa-trophy"></i>
+                </div>
+                <div class="ml-4">
+                  <p class="text-sm text-gray-500 dark:text-gray-400">XP Points</p>
+                  <p class="text-2xl font-bold">1,250</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Main Content Grid -->
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Course Progress -->
+            <div class="lg:col-span-2">
+              <div class="glass rounded-xl p-6 backdrop-blur-md mb-6">
+                <div class="flex items-center justify-between mb-4">
+                  <h3 class="text-lg font-semibold">Your Courses</h3>
+                  <a href="#" class="text-sm text-primary-600 dark:text-primary-400 hover:underline">View All</a>
+                </div>
+                
+                <div class="space-y-4">
+                  <!-- Course 1 -->
+                  <div class="bg-white dark:bg-dark-100 rounded-lg p-4 shadow-sm">
+                    <div class="flex items-start">
+                      <div class="w-16 h-16 rounded-md bg-gradient-to-r from-primary-500 to-secondary-500 flex items-center justify-center text-white">
+                        <i class="fas fa-code text-xl"></i>
+                      </div>
+                      <div class="ml-4 flex-1">
+                        <h4 class="font-medium">Full-Stack Web Development</h4>
+                        <div class="mt-2">
+                          <div class="w-full bg-gray-200 dark:bg-dark-300 rounded-full h-2">
+                            <div class="bg-primary-600 h-2 rounded-full" style="width: 65%"></div>
+                          </div>
+                          <div class="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-1">
+                            <span>65% Complete</span>
+                            <span>12/18 Lessons</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="mt-4 flex space-x-2">
+                      <button class="flex-1 px-3 py-1 bg-primary-600 text-white text-sm rounded hover:bg-primary-700 transition-colors">
+                        Continue
+                      </button>
+                      <button class="px-3 py-1 border border-gray-300 dark:border-dark-100 text-sm rounded hover:bg-gray-100 dark:hover:bg-dark-300 transition-colors">
+                        <i class="fas fa-ellipsis-h"></i>
+                      </button>
+                    </div>
+                  </div>
+                  
+                  <!-- Course 2 -->
+                  <div class="bg-white dark:bg-dark-100 rounded-lg p-4 shadow-sm">
+                    <div class="flex items-start">
+                      <div class="w-16 h-16 rounded-md bg-gradient-to-r from-purple-500 to-pink-500 flex items-center justify-center text-white">
+                        <i class="fas fa-server text-xl"></i>
+                      </div>
+                      <div class="ml-4 flex-1">
+                        <h4 class="font-medium">Backend with Node.js</h4>
+                        <div class="mt-2">
+                          <div class="w-full bg-gray-200 dark:bg-dark-300 rounded-full h-2">
+                            <div class="bg-primary-600 h-2 rounded-full" style="width: 30%"></div>
+                          </div>
+                          <div class="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-1">
+                            <span>30% Complete</span>
+                            <span>6/20 Lessons</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="mt-4 flex space-x-2">
+                      <button class="flex-1 px-3 py-1 bg-primary-600 text-white text-sm rounded hover:bg-primary-700 transition-colors">
+                        Continue
+                      </button>
+                      <button class="px-3 py-1 border border-gray-300 dark:border-dark-100 text-sm rounded hover:bg-gray-100 dark:hover:bg-dark-300 transition-colors">
+                        <i class="fas fa-ellipsis-h"></i>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Achievements -->
+              <div class="glass rounded-xl p-6 backdrop-blur-md">
+                <div class="flex items-center justify-between mb-4">
+                  <h3 class="text-lg font-semibold">Recent Achievements</h3>
+                  <a href="#" class="text-sm text-primary-600 dark:text-primary-400 hover:underline">View All</a>
+                </div>
+                
+                <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                  <div class="bg-white dark:bg-dark-100 rounded-lg p-4 text-center">
+                    <div class="w-12 h-12 rounded-full bg-yellow-100 dark:bg-yellow-900 flex items-center justify-center text-yellow-600 dark:text-yellow-400 mx-auto mb-2">
+                      <i class="fas fa-medal"></i>
+                    </div>
+                    <h4 class="text-sm font-medium">Fast Learner</h4>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">Completed 5 lessons in a day</p>
+                  </div>
+                  <div class="bg-white dark:bg-dark-100 rounded-lg p-4 text-center">
+                    <div class="w-12 h-12 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center text-blue-600 dark:text-blue-400 mx-auto mb-2">
+                      <i class="fas fa-check-double"></i>
+                    </div>
+                    <h4 class="text-sm font-medium">Perfect Score</h4>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">Aced a quiz</p>
+                  </div>
+                  <div class="bg-white dark:bg-dark-100 rounded-lg p-4 text-center">
+                    <div class="w-12 h-12 rounded-full bg-green-100 dark:bg-green-900 flex items-center justify-center text-green-600 dark:text-green-400 mx-auto mb-2">
+                      <i class="fas fa-fire"></i>
+                    </div>
+                    <h4 class="text-sm font-medium">3-Day Streak</h4>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">Learned for 3 days straight</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Right Sidebar -->
+            <div class="space-y-6">
+              <!-- Recommended Courses -->
+              <div class="glass rounded-xl p-6 backdrop-blur-md">
+                <h3 class="text-lg font-semibold mb-4">Recommended For You</h3>
+                
+                <div class="space-y-4">
+                  <div class="flex items-center">
+                    <div class="w-12 h-12 rounded-md bg-gradient-to-r from-blue-500 to-cyan-500 flex items-center justify-center text-white">
+                      <i class="fab fa-react"></i>
+                    </div>
+                    <div class="ml-3">
+                      <h4 class="text-sm font-medium">React Advanced Patterns</h4>
+                      <div class="flex items-center text-xs text-gray-500 dark:text-gray-400 mt-1">
+                        <i class="fas fa-star text-yellow-400 mr-1"></i>
+                        <span>4.8 (120)</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="flex items-center">
+                    <div class="w-12 h-12 rounded-md bg-gradient-to-r from-red-500 to-orange-500 flex items-center justify-center text-white">
+                      <i class="fas fa-database"></i>
+                    </div>
+                    <div class="ml-3">
+                      <h4 class="text-sm font-medium">MongoDB Mastery</h4>
+                      <div class="flex items-center text-xs text-gray-500 dark:text-gray-400 mt-1">
+                        <i class="fas fa-star text-yellow-400 mr-1"></i>
+                        <span>4.6 (85)</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="flex items-center">
+                    <div class="w-12 h-12 rounded-md bg-gradient-to-r from-green-500 to-teal-500 flex items-center justify-center text-white">
+                      <i class="fas fa-shield-alt"></i>
+                    </div>
+                    <div class="ml-3">
+                      <h4 class="text-sm font-medium">Web Security</h4>
+                      <div class="flex items-center text-xs text-gray-500 dark:text-gray-400 mt-1">
+                        <i class="fas fa-star text-yellow-400 mr-1"></i>
+                        <span>4.9 (210)</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <button class="w-full mt-4 px-4 py-2 border border-transparent text-sm font-medium rounded-md text-primary-700 bg-primary-100 hover:bg-primary-200 dark:text-primary-300 dark:bg-primary-900/30 dark:hover:bg-primary-900/50 transition-colors">
+                  Browse Recommendations
+                </button>
+              </div>
+              
+              <!-- Learning Goals -->
+              <div class="glass rounded-xl p-6 backdrop-blur-md">
+                <h3 class="text-lg font-semibold mb-4">Weekly Goals</h3>
+                
+                <div class="space-y-3">
+                  <div>
+                    <div class="flex justify-between mb-1">
+                      <span class="text-sm font-medium">Complete 5 lessons</span>
+                      <span class="text-sm text-gray-500 dark:text-gray-400">3/5</span>
+                    </div>
+                    <div class="w-full bg-gray-200 dark:bg-dark-300 rounded-full h-2">
+                      <div class="bg-primary-600 h-2 rounded-full" style="width: 60%"></div>
+                    </div>
+                  </div>
+                  <div>
+                    <div class="flex justify-between mb-1">
+                      <span class="text-sm font-medium">Spend 4 hours learning</span>
+                      <span class="text-sm text-gray-500 dark:text-gray-400">2.5/4</span>
+                    </div>
+                    <div class="w-full bg-gray-200 dark:bg-dark-300 rounded-full h-2">
+                      <div class="bg-primary-600 h-2 rounded-full" style="width: 62.5%"></div>
+                    </div>
+                  </div>
+                  <div>
+                    <div class="flex justify-between mb-1">
+                      <span class="text-sm font-medium">Complete 1 project</span>
+                      <span class="text-sm text-gray-500 dark:text-gray-400">0/1</span>
+                    </div>
+                    <div class="w-full bg-gray-200 dark:bg-dark-300 rounded-full h-2">
+                      <div class="bg-primary-600 h-2 rounded-full" style="width: 0%"></div>
+                    </div>
+                  </div>
+                </div>
+                
+                <button class="w-full mt-4 px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 transition-colors">
+                  Set New Goals
+                </button>
+              </div>
+              
+              <!-- Community Activity -->
+              <div class="glass rounded-xl p-6 backdrop-blur-md">
+                <h3 class="text-lg font-semibold mb-4">Community Activity</h3>
+                
+                <div class="space-y-4">
+                  <div class="flex items-start">
+                    <div class="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-xs mr-3">AS</div>
+                    <div>
+                      <p class="text-sm"><span class="font-medium">Alex Smith</span> completed <span class="text-primary-600 dark:text-primary-400">React Basics</span></p>
+                      <p class="text-xs text-gray-500 dark:text-gray-400">2 hours ago</p>
+                    </div>
+                  </div>
+                  <div class="flex items-start">
+                    <div class="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-xs mr-3">TJ</div>
+                    <div>
+                      <p class="text-sm"><span class="font-medium">Taylor Johnson</span> shared a project</p>
+                      <p class="text-xs text-gray-500 dark:text-gray-400">5 hours ago</p>
+                    </div>
+                  </div>
+                  <div class="flex items-start">
+                    <div class="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-xs mr-3">MB</div>
+                    <div>
+                      <p class="text-sm"><span class="font-medium">Madushanka Bandara</span> posted a question</p>
+                      <p class="text-xs text-gray-500 dark:text-gray-400">1 day ago</p>
+                    </div>
+                  </div>
+                </div>
+                
+                <button class="w-full mt-4 px-4 py-2 border border-transparent text-sm font-medium rounded-md text-primary-700 bg-primary-100 hover:bg-primary-200 dark:text-primary-300 dark:bg-primary-900/30 dark:hover:bg-primary-900/50 transition-colors">
+                  Join Community
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Firebase Config -->
+  <script>
+    // Initialize Firebase
+    const firebaseConfig = {
+      apiKey: "AIzaSyAPdHALWMmrgx-3_LqSWf-BIV4MTlr1i20",
+      authDomain: "website-b3401.firebaseapp.com",
+      projectId: "website-b3401",
+      storageBucket: "website-b3401.appspot.com",
+      messagingSenderId: "795021210112",
+      appId: "1:795021210112:web:2f652c7f3ef590ffd6dee5"
+    };
+    firebase.initializeApp(firebaseConfig);
+  </script>
+  
+  <!-- GSAP core -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+
+<!-- ScrollTo Plugin -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollToPlugin.min.js"></script>
+
+  <!-- Main JavaScript -->
+  <script src="script.js"></script>
+</body>
+</html>
